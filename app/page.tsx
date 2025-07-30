@@ -54,26 +54,28 @@ we craft experiences that transform ordinary days into extraordinary moments`,
     updateScrollPosition(scrollAmount)
   }, [updateScrollPosition, scrollSensitivity])
 
-  // Touch handlers for mobile
+  // Touch handlers for mobile (iOS compatible)
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    e.preventDefault()
     touchStartY.current = e.touches[0].clientY
     isScrolling.current = false
   }, [])
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isScrolling.current) {
-      e.preventDefault()
-      
-      const touchCurrentY = e.touches[0].clientY
-      const deltaY = (touchStartY.current - touchCurrentY) * touchSensitivity
-      
+    e.preventDefault()
+    
+    const touchCurrentY = e.touches[0].clientY
+    const deltaY = (touchStartY.current - touchCurrentY) * touchSensitivity
+    
+    if (Math.abs(deltaY) > 1) { // Add threshold to prevent micro movements
       updateScrollPosition(deltaY)
       touchStartY.current = touchCurrentY
       isScrolling.current = true
     }
   }, [updateScrollPosition, touchSensitivity])
 
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    e.preventDefault()
     isScrolling.current = false
   }, [])
 
@@ -106,14 +108,18 @@ we craft experiences that transform ordinary days into extraordinary moments`,
   }, [updateScrollPosition, updateText, maxScroll])
 
   useEffect(() => {
-    const element = document.documentElement
+    const element = document.body // Use body instead of documentElement for better iOS support
 
-    // Add event listeners
+    // Add event listeners with proper options for iOS
     element.addEventListener('wheel', handleWheel, { passive: false })
     element.addEventListener('touchstart', handleTouchStart, { passive: false })
     element.addEventListener('touchmove', handleTouchMove, { passive: false })
-    element.addEventListener('touchend', handleTouchEnd, { passive: true })
-    element.addEventListener('keydown', handleKeyDown, { passive: false })
+    element.addEventListener('touchend', handleTouchEnd, { passive: false })
+    document.addEventListener('keydown', handleKeyDown, { passive: false })
+
+    // Prevent default iOS scroll behavior
+    const preventScroll = (e: Event) => e.preventDefault()
+    document.addEventListener('touchmove', preventScroll, { passive: false })
 
     // Cleanup
     return () => {
@@ -121,7 +127,8 @@ we craft experiences that transform ordinary days into extraordinary moments`,
       element.removeEventListener('touchstart', handleTouchStart)
       element.removeEventListener('touchmove', handleTouchMove)
       element.removeEventListener('touchend', handleTouchEnd)
-      element.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('touchmove', preventScroll)
     }
   }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd, handleKeyDown])
 
@@ -135,7 +142,15 @@ we craft experiences that transform ordinary days into extraordinary moments`,
   `.trim()
 
   return (
-    <div className="overflow-hidden h-screen touch-none select-none">
+    <div 
+      className="overflow-hidden h-screen touch-none select-none"
+      style={{
+        WebkitOverflowScrolling: 'touch',
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'none'
+      }}
+    >
       <div className="fixed inset-0 z-0">
         <Background>
           <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-4 pb-20 gap-8 sm:p-8 sm:gap-16 lg:p-20">

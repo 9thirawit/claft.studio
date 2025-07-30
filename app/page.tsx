@@ -10,7 +10,7 @@ export default function Home() {
 
   const textArray = [
     "claft.studio",
-    `we don't just build applications, 
+    `We don't just build applications, 
 we craft experiences that transform ordinary days into extraordinary moments`,
   ]
 
@@ -25,6 +25,7 @@ we craft experiences that transform ordinary days into extraordinary moments`,
       )
       
       const newText = textArray[textIndex]
+
       if (newText !== currentText) {
         setIsAnimating(true)
         setTimeout(() => {
@@ -43,15 +44,40 @@ we craft experiences that transform ordinary days into extraordinary moments`,
       setScrollPosition(newPosition)
       updateText(newPosition)
     }
+
+    let touchStartY = 0
+    let touchEndY = 0
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      touchEndY = e.touches[0].clientY
+      
+      const touchDiff = touchStartY - touchEndY
+      const scrollAmount = touchDiff * 3 
+      const newPosition = Math.max(0, Math.min(maxScroll, scrollPosition + scrollAmount))
+      
+      setScrollPosition(newPosition)
+      updateText(newPosition)
+      
+      touchStartY = touchEndY
+    }
     document.addEventListener('wheel', handleWheel, { passive: false })
+    document.addEventListener('touchstart', handleTouchStart, { passive: false })
+    document.addEventListener('touchmove', handleTouchMove, { passive: false })
 
     return () => {
       document.removeEventListener('wheel', handleWheel)
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchmove', handleTouchMove)
     }
-  }, [scrollPosition, textArray])
+  }, [scrollPosition, textArray, currentText])
 
   return (
-    <div className="overflow-hidden h-screen">
+    <div className="overflow-hidden h-screen touch-none">
       <div className="fixed inset-0 z-0">
         <Background>
           <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">

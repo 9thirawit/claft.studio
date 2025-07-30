@@ -1,29 +1,18 @@
 "use client";
 
 import { Footer, Background } from "./components"
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
   const [currentText, setCurrentText] = useState("claft.studio")
   const [scrollPosition, setScrollPosition] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const textArray = [
     "claft.studio",
-    `We don't just build applications, 
+    `we don't just build applications, 
 we craft experiences that transform ordinary days into extraordinary moments`,
   ]
-
-  useEffect(() => {
-    // ซ่อน scrollbar ของ body
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      // คืนค่า scrollbar เมื่อ component unmount
-      document.body.style.overflow = 'auto'
-    }
-  }, [])
 
   useEffect(() => {
     const maxScroll = 2000
@@ -36,7 +25,6 @@ we craft experiences that transform ordinary days into extraordinary moments`,
       )
       
       const newText = textArray[textIndex]
-
       if (newText !== currentText) {
         setIsAnimating(true)
         setTimeout(() => {
@@ -46,91 +34,24 @@ we craft experiences that transform ordinary days into extraordinary moments`,
       }
     }
 
-    // Desktop wheel event
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault()
+      
       const scrollAmount = e.deltaY * 2
       const newPosition = Math.max(0, Math.min(maxScroll, scrollPosition + scrollAmount))
+      
       setScrollPosition(newPosition)
       updateText(newPosition)
     }
+    document.addEventListener('wheel', handleWheel, { passive: false })
 
-    // Mobile touch events
-    let touchStartY = 0
-    let isScrolling = false
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY
-      isScrolling = false
+    return () => {
+      document.removeEventListener('wheel', handleWheel)
     }
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isScrolling) {
-        const touchCurrentY = e.touches[0].clientY
-        const touchDiff = touchStartY - touchCurrentY
-        
-        // ตรวจสอบว่าเป็นการ scroll จริงๆ (ไม่ใช่การแตะเพียงอย่างเดียว)
-        if (Math.abs(touchDiff) > 5) {
-          e.preventDefault()
-          isScrolling = true
-          
-          const scrollAmount = touchDiff * 5 // เพิ่มความไว
-          const newPosition = Math.max(0, Math.min(maxScroll, scrollPosition + scrollAmount))
-          
-          setScrollPosition(newPosition)
-          updateText(newPosition)
-          
-          touchStartY = touchCurrentY
-        }
-      } else {
-        e.preventDefault()
-        const touchCurrentY = e.touches[0].clientY
-        const touchDiff = touchStartY - touchCurrentY
-        
-        const scrollAmount = touchDiff * 5
-        const newPosition = Math.max(0, Math.min(maxScroll, scrollPosition + scrollAmount))
-        
-        setScrollPosition(newPosition)
-        updateText(newPosition)
-        
-        touchStartY = touchCurrentY
-      }
-    }
-
-    const handleTouchEnd = () => {
-      isScrolling = false
-    }
-
-    // Add event listeners
-    if (containerRef.current) {
-      const container = containerRef.current
-      
-      // Desktop events
-      container.addEventListener('wheel', handleWheel, { passive: false })
-      
-      // Mobile events
-      container.addEventListener('touchstart', handleTouchStart, { passive: true })
-      container.addEventListener('touchmove', handleTouchMove, { passive: false })
-      container.addEventListener('touchend', handleTouchEnd, { passive: true })
-
-      return () => {
-        container.removeEventListener('wheel', handleWheel)
-        container.removeEventListener('touchstart', handleTouchStart)
-        container.removeEventListener('touchmove', handleTouchMove)
-        container.removeEventListener('touchend', handleTouchEnd)
-      }
-    }
-  }, [scrollPosition, textArray, currentText])
+  }, [scrollPosition, textArray])
 
   return (
-    <div 
-      ref={containerRef}
-      className="overflow-hidden h-screen w-full"
-      style={{ 
-        touchAction: 'pan-y',
-        WebkitOverflowScrolling: 'touch'
-      }}
-    >
+    <div className="overflow-hidden h-screen">
       <div className="fixed inset-0 z-0">
         <Background>
           <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">

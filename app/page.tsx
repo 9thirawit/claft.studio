@@ -7,8 +7,8 @@ export default function Home() {
   const [currentText, setCurrentText] = useState("claft.studio")
   const [scrollPosition, setScrollPosition] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [viewportHeight, setViewportHeight] = useState(0)
   
-  // Touch handling refs
   const touchStartY = useRef(0)
   const isScrolling = useRef(false)
 
@@ -22,7 +22,17 @@ we craft experiences that transform ordinary days into extraordinary moments`,
   const scrollSensitivity = 2
   const touchSensitivity = 3
 
-  // Memoized text update function
+  // ฟังก์ชันสำหรับคำนวณ viewport height ที่แท้จริง
+  const updateViewportHeight = useCallback(() => {
+    // ใช้ visualViewport API ถ้ามี (ใหม่กว่าและแม่นยำกว่า)
+    if (window.visualViewport) {
+      setViewportHeight(window.visualViewport.height)
+    } else {
+      // fallback สำหรับ browser เก่า
+      setViewportHeight(window.innerHeight)
+    }
+  }, [])
+
   const updateText = useCallback((position: number) => {
     const scrollPercentage = position / maxScroll
     const textIndex = Math.min(
@@ -40,21 +50,18 @@ we craft experiences that transform ordinary days into extraordinary moments`,
     }
   }, [currentText, textArray, maxScroll])
 
-  // Update scroll position helper
   const updateScrollPosition = useCallback((deltaY: number) => {
     const newPosition = Math.max(0, Math.min(maxScroll, scrollPosition + deltaY))
     setScrollPosition(newPosition)
     updateText(newPosition)
   }, [scrollPosition, maxScroll, updateText])
 
-  // Mouse wheel handler
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
     const scrollAmount = e.deltaY * scrollSensitivity
     updateScrollPosition(scrollAmount)
   }, [updateScrollPosition, scrollSensitivity])
 
-  // Touch handlers for mobile (iOS compatible)
   const handleTouchStart = useCallback((e: TouchEvent) => {
     e.preventDefault()
     touchStartY.current = e.touches[0].clientY
@@ -67,7 +74,7 @@ we craft experiences that transform ordinary days into extraordinary moments`,
     const touchCurrentY = e.touches[0].clientY
     const deltaY = (touchStartY.current - touchCurrentY) * touchSensitivity
     
-    if (Math.abs(deltaY) > 1) { // Add threshold to prevent micro movements
+    if (Math.abs(deltaY) > 1) {
       updateScrollPosition(deltaY)
       touchStartY.current = touchCurrentY
       isScrolling.current = true
@@ -79,7 +86,6 @@ we craft experiences that transform ordinary days into extraordinary moments`,
     isScrolling.current = false
   }, [])
 
-  // Keyboard handler for accessibility
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const keyScrollAmount = 100
     
@@ -108,20 +114,53 @@ we craft experiences that transform ordinary days into extraordinary moments`,
   }, [updateScrollPosition, updateText, maxScroll])
 
   useEffect(() => {
-    const element = document.body // Use body instead of documentElement for better iOS support
+    // ตั้งค่า viewport height เมื่อโหลดครั้งแรก
+    updateViewportHeight()
 
-    // Add event listeners with proper options for iOS
+    const element = document.body
+
+    // เพิ่ม meta tag สำหรับ viewport ถ้ายังไม่มี
+    const viewport = document.querySelector('meta[name="viewport"]')
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no')
+    }
+
+    // เพิ่ม CSS custom properties สำหรับ viewport height
+    const updateCSSCustomProperties = () => {
+      const vh = window.innerHeight * 0.01
+      document.documentElement.style.setProperty('--vh', `${vh}px`)
+      
+      // สำหรับ visualViewport
+      if (window.visualViewport) {
+        const vvh = window.visualViewport.height * 0.01
+        document.documentElement.style.setProperty('--vvh', `${vvh}px`)
+      }
+    }
+
+    updateCSSCustomProperties()
+
     element.addEventListener('wheel', handleWheel, { passive: false })
     element.addEventListener('touchstart', handleTouchStart, { passive: false })
     element.addEventListener('touchmove', handleTouchMove, { passive: false })
     element.addEventListener('touchend', handleTouchEnd, { passive: false })
     document.addEventListener('keydown', handleKeyDown, { passive: false })
 
-    // Prevent default iOS scroll behavior
     const preventScroll = (e: Event) => e.preventDefault()
     document.addEventListener('touchmove', preventScroll, { passive: false })
 
-    // Cleanup
+    window.addEventListener('resize', updateViewportHeight)
+    window.addEventListener('orientationchange', updateViewportHeight)
+    
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateViewportHeight)
+      window.visualViewport.addEventListener('scroll', updateViewportHeight)
+    }
+
+    window.addEventListener('resize', updateCSSCustomProperties)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateCSSCustomProperties)
+    }
+
     return () => {
       element.removeEventListener('wheel', handleWheel)
       element.removeEventListener('touchstart', handleTouchStart)
@@ -129,10 +168,18 @@ we craft experiences that transform ordinary days into extraordinary moments`,
       element.removeEventListener('touchend', handleTouchEnd)
       document.removeEventListener('keydown', handleKeyDown)
       document.removeEventListener('touchmove', preventScroll)
+      window.removeEventListener('resize', updateViewportHeight)
+      window.removeEventListener('orientationchange', updateViewportHeight)
+      window.removeEventListener('resize', updateCSSCustomProperties)
+      
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateViewportHeight)
+        window.visualViewport.removeEventListener('scroll', updateViewportHeight)
+        window.visualViewport.removeEventListener('resize', updateCSSCustomProperties)
+      }
     }
-  }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd, handleKeyDown])
+  }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd, handleKeyDown, updateViewportHeight])
 
-  // Text animation classes
   const textClasses = `
     transition-all duration-300 ease-in-out whitespace-pre-line transform
     ${isAnimating 
@@ -143,17 +190,28 @@ we craft experiences that transform ordinary days into extraordinary moments`,
 
   return (
     <div 
-      className="overflow-hidden h-screen touch-none select-none"
+      className="overflow-hidden touch-none select-none"
       style={{
+        height: 'calc(var(--vvh, var(--vh, 1vh)) * 100)',
+        minHeight: '-webkit-fill-available',
         WebkitOverflowScrolling: 'touch',
         WebkitTouchCallout: 'none',
         WebkitUserSelect: 'none',
-        touchAction: 'none'
+        touchAction: 'none',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
       }}
     >
       <div className="fixed inset-0 z-0">
         <Background>
-          <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-4 pb-20 gap-8 sm:p-8 sm:gap-16 lg:p-20">
+          <div 
+            className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center p-4 pb-20 gap-8 sm:p-8 sm:gap-16 lg:p-20"
+            style={{
+              minHeight: 'calc(var(--vvh, var(--vh, 1vh)) * 100)',
+            }}
+          >
             <main className="flex flex-col gap-8 row-start-2 items-center justify-center text-center">
               <div className="font-mono text-sm leading-6 sm:text-base sm:leading-7">
                 <p className="mb-2 tracking-tight">

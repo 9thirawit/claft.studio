@@ -10,7 +10,7 @@ export default function Home() {
 
   const textArray = [
     "claft.studio",
-    `We don't just build applications, 
+    `we don't just build applications, 
 we craft experiences that transform ordinary days into extraordinary moments`,
   ]
 

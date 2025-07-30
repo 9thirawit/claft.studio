@@ -2,8 +2,8 @@
 
 
 :root {
-  --background: #FAF9EE;
-  --foreground: #171717;
+  --background: #E4D6C5;
+  --foreground: #131C2D;
 }
 
 @theme inline {
@@ -15,8 +15,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #131C2D;
+    --foreground: #E4D6C5;
   }
 }
 
@@ -39,6 +39,15 @@ body {
   letter-spacing: 0.2px;
   opacity: 0.95;
   text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 

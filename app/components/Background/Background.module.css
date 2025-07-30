@@ -15,9 +15,9 @@
   width: 100%;
   height: 100%;
   background: 
-    radial-gradient(circle at 20% 50%, #FAF9EE 0%, #FAF9EE 50%),
-    radial-gradient(circle at 80% 20%, #fefbd6 0%, #FAF9EE 50%),
-    radial-gradient(circle at 40% 80%, #FAF9EE 0%, #FAF9EE 50%);
+    radial-gradient(circle at 20% 50%, #ededed 0%, #ededed 50%),
+    radial-gradient(circle at 80% 20%, #fefbd6 0%, #ededed 50%),
+    radial-gradient(circle at 40% 80%, #ededed 0%, #ededed 50%);
   background-size: 100% 100%;
 }
 
@@ -29,10 +29,10 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(45deg, 
-    #FAF9EE 0%,
+    #ededed 0%,
     transparent 30%,
     transparent 70%,
-    #FAF9EE 100%);
+    #ededed 100%);
   animation: gradientShift1 8s infinite ease-in-out;
 }
 
@@ -44,7 +44,7 @@
   height: 100%;
   background: linear-gradient(-45deg, 
     transparent 0%,
-    #FAF9EE 50%,
+    #ededed 50%,
     transparent 100%);
   animation: gradientShift2 10s infinite ease-in-out reverse;
 }
